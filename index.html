@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material.min.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: white; /* Default background color */
+            color: black;
+            overflow: hidden; /* Prevent scrollbars on the body */
+        }
+        #navbar {
+            display: flex;
+            justify-content: space-between; /* Align items to left and right */
+            align-items: center; /* Center items vertically */
+            width: 100%;
+            height: 30px;
+            background-color: #333;
+            color: white;
+            padding: 5px 10px; /* Adjusted padding for better spacing */
+            text-align: center;
+            position: relative;
+            z-index: 1000;
+        }
+        #navbar a, #navbar button {
+            padding: 5px 10px;
+            border: none;
+            background-color: #333;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 10px; /* Added margin for spacing between buttons */
+        }
+        #navbar input[type="text"] {
+            padding: 5px;
+            border: none;
+            background-color: #444;
+            color: white;
+            border-radius: 3px;
+            width: 150px; /* Adjusted width for file naming input */
+            margin-right: 10px; /* Added margin for spacing */
+        }
+        #navbar .dropdown {
+            position: relative;
+            display: inline-block;
+            margin-right: 10px; /* Added margin for spacing */
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #333;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); /* Added shadow effect */
+            z-index: 1;
+            border-radius: 5px;
+        }
+        .dropdown-content a {
+            color: white;
+            padding: 10px 12px;
+            text-decoration: none;
+            display: block;
+        }
+        .dropdown-content a:hover {background-color: #555;}
+        .dropdown:hover .dropdown-content {display: block;}
+        .CodeMirror {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevent scrollbars on the editor */
+        }
+        .CodeMirror-scroll {
+            scrollbar-width: none; /* Hide scrollbar for Firefox */
+        }
+        .CodeMirror-scroll::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
+        }
+        #editor-container {
+            display: flex;
+            width: 100%;
+            height: calc(100% - 40px); /* Adjusted height to accommodate navbar */
+            margin-top: 10px; /* Added margin-top for spacing */
+            overflow: hidden; /* Prevent stretching */
+        }
+        .code-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin: 0 10px;
+            overflow: hidden;
+            background-color: #2b2b2b; /* Darker background for hacker theme */
+            opacity: 0.9; /* Transparency for notepads */
+        }
+        .code-section .label {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            background-color: #333;
+            color: white;
+            font-weight: bold;
+        }
+        .code-section .label img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        .dark-mode {
+            background-color: #2b2b2b; /* Custom dark background */
+            color: white; /* Text color in dark mode */
+        }
+        .hacker-mode {
+            background-image: url('https://img.freepik.com/free-vector/stream-binary-code-design-vector_53876-161363.jpg?w=900&t=st=1718523180~exp=1718523780~hmac=7858acf0c0eec22a5d89ddc303bd146c4a6443dc69a24c17dcb338b136905681');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .hacker-mode .code-section {
+            background-color: rgba(26, 26, 26, 0.9); /* Transparent dark grey for notepad */
+        }
+        .hacker-mode #navbar, .hacker-mode #navbar a, .hacker-mode #navbar button {
+            background-color: #1a1a1a; /* Darker grey for navbar */
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar">
+        <!-- Navigation links can be added here -->
+        <div>
+            <button id="run-button">Run</button>
+            <button id="open-file-button">Open File</button>
+            <input type="file" id="file-input" style="display: none;">
+            <button id="save-file-button">Save File</button>
+            <div class="dropdown">
+                <button class="dropbtn" id="themes-dropdown">Themes</button>
+                <div class="dropdown-content">
+                    <a href="#" id="default-theme">Default</a>
+                    <a href="#" id="dark-theme">Dark</a>
+                    <a href="#" id="hacker-theme">Hacker</a>
+                    <a href="#" id="realistic-theme">Realistic</a>
+                </div>
+            </div>
+            <button id="toggle-view-button">Toggle View</button>
+            <input type="text" id="file-name" placeholder="Enter file name">
+        </div>
+    </div>
+    <div id="editor-container">
+        <div id="html-editor" class="code-section">
+            <div class="label">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/61/HTML5_logo_and_wordmark.svg" alt="HTML Logo">
+                HTML
+            </div>
+        </div>
+        <div id="css-editor" class="code-section">
+            <div class="label">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/CSS3_logo_and_wordmark.svg" alt="CSS Logo">
+                CSS
+            </div>
+        </div>
+        <div id="js-editor" class="code-section">
+            <div class="label">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6a/JavaScript-logo.png" alt="JavaScript Logo">
+                JavaScript
+            </div>
+        </div>
+    </div>
+    <div id="buttons">
+        <button id="starter-button">Starter Code</button>
+        <button id="add-image-button">Add Image</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script>
+        var htmlEditor = CodeMirror(document.getElementById('html-editor'), {
+            lineNumbers: true,
+            mode: "htmlmixed",
+            theme: "material",
+            viewportMargin: Infinity, // Ensure scrolling if content is long
+        });
+        var cssEditor = CodeMirror(document.getElementById('css-editor'), {
+            lineNumbers: true,
+            mode: "css",
+            theme: "material",
+            viewportMargin: Infinity, // Ensure scrolling if content is long
+        });
+        var jsEditor = CodeMirror(document.getElementById('js-editor'), {
+            lineNumbers: true,
+            mode: "javascript",
+            theme: "material",
+            viewportMargin: Infinity, // Ensure scrolling if content is long
+        });
+
+        // Default theme is light
+        document.body.classList.remove('dark-mode');
+        document.body.classList.remove('hacker-mode');
+
+        document.getElementById('run-button').addEventListener('click', function() {
+            var htmlCode = htmlEditor.getValue();
+            var cssCode = `<style>${cssEditor.getValue()}</style>`;
+            var jsCode = `<script>${jsEditor.getValue()}<\/script>`;
+            var output = `${htmlCode}${cssCode}${jsCode}`;
+
+            var newWindow = window.open();
+            newWindow.document.open();
+            newWindow.document.write(output);
+            newWindow.document.close();
+        });
+
+        document.getElementById('open-file-button').addEventListener('click', function() {
+            document.getElementById('file-input').click();
+        });
+
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    htmlEditor.setValue(e.target.result);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        document.getElementById('save-file-button').addEventListener('click', function() {
+            var fileName = document.getElementById('file-name').value || 'untitled.html';
+            var htmlCode = htmlEditor.getValue();
+            var cssCode = `<style>${cssEditor.getValue()}</style>`;
+            var jsCode = `<script>${jsEditor.getValue()}<\/script>`;
+            var output = `${htmlCode}${cssCode}${jsCode}`;
+
+            var blob = new Blob([output], { type: 'text/html' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        document.getElementById('starter-button').addEventListener('click', function() {
+            htmlEditor.setValue('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>Document</title>\n</head>\n<body>\n\n</body>\n</html>');
+            cssEditor.setValue('/* Add your CSS here */');
+            jsEditor.setValue('// Add your JavaScript here');
+        });
+
+        document.getElementById('add-image-button').addEventListener('click', function() {
+            var imageUrl = prompt('Enter the image URL:');
+            if (imageUrl) {
+                htmlEditor.replaceSelection(`<img src="${imageUrl}" alt="Image">\n`);
+            }
+        });
+
+        // Toggle view button functionality
+        var isSingleView = false;
+        document.getElementById('toggle-view-button').addEventListener('click', function() {
+            isSingleView = !isSingleView;
+            if (isSingleView) {
+                document.getElementById('css-editor').classList.add('hidden');
+                document.getElementById('js-editor').classList.add('hidden');
+                document.getElementById('html-editor').style.flex = '1 1 100%';
+            } else {
+                document.getElementById('css-editor').classList.remove('hidden');
+                document.getElementById('js-editor').classList.remove('hidden');
+                document.getElementById('html-editor').style.flex = '1';
+            }
+        });
+
+        // Theme selection
+        document.getElementById('default-theme').addEventListener('click', function() {
+            document.body.classList.remove('dark-mode');
+            document.body.classList.remove('hacker-mode');
+        });
+
+        document.getElementById('dark-theme').addEventListener('click', function() {
+            document.body.classList.add('dark-mode');
+            document.body.classList.remove('hacker-mode');
+        });
+
+        document.getElementById('hacker-theme').addEventListener('click', function() {
+            document.body.classList.add('hacker-mode');
+            document.body.classList.remove('dark-mode');
+        });
+
+        document.getElementById('realistic-theme').addEventListener('click', function() {
+            // Implement realistic theme behavior if needed
+        });
+    </script>
+</body>
+</html>
